@@ -6,6 +6,7 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   loading: boolean;
   streamingContent: string;
+  hasApiKey: boolean;
   onSendMessage: (content: string) => void;
   onClear: () => void;
 }
@@ -14,6 +15,7 @@ export function ChatPanel({
   messages,
   loading,
   streamingContent,
+  hasApiKey,
   onSendMessage,
   onClear,
 }: ChatPanelProps) {
@@ -26,7 +28,7 @@ export function ChatPanel({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && !loading) {
+    if (input.trim() && !loading && hasApiKey) {
       onSendMessage(input.trim());
       setInput("");
     }
@@ -45,7 +47,12 @@ export function ChatPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 mb-3">
-        {messages.length === 0 ? (
+        {!hasApiKey ? (
+          <div className="text-center text-gray-400 mt-8">
+            <p className="mb-2">🔑 API 키가 필요합니다</p>
+            <p className="text-sm">상단의 설정 버튼에서 Google Gemini API 키를 입력해주세요.</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
             AI에게 질문해보세요
           </div>
@@ -100,13 +107,13 @@ export function ChatPanel({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="메시지를 입력하세요..."
-          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-          disabled={loading}
+          placeholder={hasApiKey ? "메시지를 입력하세요..." : "API 키를 먼저 설정해주세요..."}
+          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+          disabled={loading || !hasApiKey}
         />
         <button
           type="submit"
-          disabled={loading || !input.trim()}
+          disabled={loading || !input.trim() || !hasApiKey}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           전송

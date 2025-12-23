@@ -14,6 +14,7 @@ import "./App.css";
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
+  const [showApiKeyError, setShowApiKeyError] = useState(false);
   const [userCode, setUserCode] = useState("");
   const [isSolvedToday, setIsSolvedToday] = useState(false);
 
@@ -26,7 +27,10 @@ function App() {
     sendMessage,
     clearMessages,
     streamingContent,
-  } = useChat(settings, problem);
+  } = useChat(settings, problem, () => {
+    setShowApiKeyError(true);
+    setShowSettings(true);
+  });
 
   useEffect(() => {
     const checkSolved = async () => {
@@ -45,6 +49,10 @@ function App() {
   }, [problem?.id]);
 
   const handleSendMessage = (content: string) => {
+    if (!settings.apiKey) {
+      setShowSettings(true);
+      return;
+    }
     sendMessage(content, userCode || undefined);
   };
 
@@ -122,6 +130,7 @@ function App() {
                   messages={messages}
                   loading={chatLoading}
                   streamingContent={streamingContent}
+                  hasApiKey={!!settings.apiKey}
                   onSendMessage={handleSendMessage}
                   onClear={clearMessages}
                 />
@@ -134,6 +143,26 @@ function App() {
           </div>
         </div>
       </div>
+
+      {showApiKeyError && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md border border-red-500/30">
+            <h2 className="text-lg font-bold text-red-400 mb-3">API 키 오류</h2>
+            <p className="text-gray-300 mb-4">
+              입력하신 API 키가 유효하지 않습니다. 설정을 확인해주세요.
+            </p>
+            <button
+              onClick={() => {
+                setShowApiKeyError(false);
+                setShowSettings(true);
+              }}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              설정 열기
+            </button>
+          </div>
+        </div>
+      )}
 
       {showSettings && (
         <Settings

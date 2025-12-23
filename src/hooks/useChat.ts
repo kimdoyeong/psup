@@ -17,7 +17,7 @@ interface ChatRecord {
   updated_at: string;
 }
 
-export function useChat(settings: Settings, problem: Problem | null) {
+export function useChat(settings: Settings, problem: Problem | null, onApiKeyError?: () => void) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -134,52 +134,60 @@ ${problem.samples.map((s, i) => `예제 ${i + 1}:\n입력:\n${s.input}\n출력:\
     };
   }, [sessionIdRef.current, streamingContent, problem?.id, saveChat]);
 
-  const sendMessage = async (content: string, userCode?: string) => {
-    if (!settings.apiKey || !problem) return;
-
-    const userMessage: ChatMessage = { role: "user", content };
-    const newMessages = [...messages, userMessage];
-    setMessages([...newMessages, { role: "assistant", content: "" }]);
-    setLoading(true);
-    setStreamingContent("");
-
-    const sessionId = crypto.randomUUID();
-    sessionIdRef.current = sessionId;
-
-    try {
-      const contextedMessages = newMessages.map((m, i) => {
-        if (i === 0) {
-          return {
-            ...m,
-            content: `${buildContext(userCode)}\n\n${m.content}`,
-          };
-        }
-        return m;
-      });
-
-      const fullResponse = await invoke<string>("chat_with_ai_stream", {
-        apiKey: settings.apiKey,
-        model: settings.model,
-        messages: contextedMessages,
-        systemPrompt: settings.customPrompt,
-        sessionId,
-      });
-
-      const finalMessages = newMessages.concat([
-        { role: "assistant", content: fullResponse },
-      ]);
-      setMessages(finalMessages);
-      await saveChat(problem.id, finalMessages);
-    } catch (e) {
-      const errorMessages = newMessages.concat([
-        { role: "assistant", content: `오류: ${e}` },
-      ]);
-      setMessages(errorMessages);
-    } finally {
-      setLoading(false);
-      sessionIdRef.current = "";
-    }
-  };
+   const sendMessage = async (content: string, userCode?: string) => {
+     if (!settings.apiKey || !problem) return;
+ 
+     const userMessage: ChatMessage = { role: "user", content };
+     const newMessages = [...messages, userMessage];
+     setMessages([...newMessages, { role: "assistant", content: "" }]);
+     setLoading(true);
+     setStreamingContent("");
+ 
+     const sessionId = crypto.randomUUID();
+     sessionIdRef.current = sessionId;
+ 
+     try {
+       const contextedMessages = newMessages.map((m, i) => {
+         if (i === 0) {
+           return {
+             ...m,
+             content: `${buildContext(userCode)}\n\n${m.content}`,
+           };
+         }
+         return m;
+       });
+ 
+       const fullResponse = await invoke<string>("chat_with_ai_stream", {
+         apiKey: settings.apiKey,
+         model: settings.model,
+         messages: contextedMessages,
+         systemPrompt: settings.customPrompt,
+         sessionId,
+       });
+ 
+       const finalMessages = newMessages.concat([
+         { role: "assistant", content: fullResponse },
+       ]);
+       setMessages(finalMessages);
+       await saveChat(problem.id, finalMessages);
+     } catch (e) {
+       const errorStr = String(e);
+       const isApiKeyInvalid = errorStr.includes("API_KEY_INVALID") || errorStr.includes("API key not valid");
+       
+       if (isApiKeyInvalid) {
+         setMessages(newMessages);
+         onApiKeyError?.();
+       } else {
+         const errorMessages = newMessages.concat([
+           { role: "assistant", content: `오류: ${e}` },
+         ]);
+         setMessages(errorMessages);
+       }
+     } finally {
+       setLoading(false);
+       sessionIdRef.current = "";
+     }
+   };
 
   const clearMessages = async () => {
     setMessages([]);

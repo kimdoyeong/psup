@@ -37,8 +37,9 @@ jobs:
         run: cargo check
 
       - name: Lint TypeScript
-        run: npm run lint 2>/dev/null || echo "No lint script"
+        run: npm run lint
+        continue-on-error: true
 
       - name: Build (dev)
-        run: npm run tauri build -- --debug 2>/dev/null || npm run build 2>/dev/null || echo "Build step skipped"
+        run: npm run tauri build -- --debug
         continue-on-error: true
