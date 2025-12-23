@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+// 타입 정의
 import type { ProblemRecord, ActivityData } from "../types";
 
+// 함수/상수
 export function useHistory() {
   const [problems, setProblems] = useState<ProblemRecord[]>([]);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // 상태 관리 함수
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
@@ -25,6 +28,7 @@ export function useHistory() {
     }
   }, []);
 
+  // 상태 관리 함수
   const deleteProblem = useCallback(async (problemId: string) => {
     try {
       await invoke("delete_problem", { problemId });
@@ -34,6 +38,7 @@ export function useHistory() {
     }
   }, []);
 
+  // 상태 관리 함수
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);

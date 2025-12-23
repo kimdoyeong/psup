@@ -16,6 +16,7 @@ const DEFAULT_PROMPT = `당신은 알고리즘 문제 해결을 돕는 튜터입
 
 학생의 질문에 따라 적절한 도움을 제공하세요.`;
 
+// 함수/상수
 export const FALLBACK_MODELS = [
   { id: "gemini-3-pro-preview", name: "Gemini 3 Pro" },
   { id: "gemini-3-flash-preview", name: "Gemini 3 Flash" },
@@ -26,17 +27,20 @@ export const FALLBACK_MODELS = [
   { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite" },
 ];
 
+// 타입 정의
 export interface Settings {
   apiKey: string;
   model: string;
   customPrompt: string;
 }
 
+// 타입 정의
 export interface AvailableModel {
   id: string;
   name: string;
 }
 
+// 함수/상수
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>({
     apiKey: "",
@@ -46,6 +50,7 @@ export function useSettings() {
   const [models, setModels] = useState<AvailableModel[]>(FALLBACK_MODELS);
   const [loadingModels, setLoadingModels] = useState(false);
 
+  // 상태 관리 함수
   useEffect(() => {
     setSettings({
       apiKey: localStorage.getItem(STORAGE_KEYS.apiKey) ?? "",

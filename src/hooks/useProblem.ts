@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+// 타입 정의
 import type { Problem } from "../types";
 
+// 함수/상수
 export function useProblem() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(false);

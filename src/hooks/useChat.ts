@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+// 타입 정의
 import type { ChatMessage, Problem } from "../types";
+// 타입 정의
 import type { Settings } from "./useSettings";
 
 interface StreamChunk {
@@ -17,6 +19,7 @@ interface ChatRecord {
   updated_at: string;
 }
 
+// 함수/상수
 export function useChat(settings: Settings, problem: Problem | null, onApiKeyError?: () => void) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,6 +27,7 @@ export function useChat(settings: Settings, problem: Problem | null, onApiKeyErr
   const sessionIdRef = useRef<string>("");
   const currentProblemIdRef = useRef<string | null>(null);
 
+  // 상태 관리 함수
   const loadChat = useCallback(async (problemId: string) => {
     console.log("[useChat] loadChat called with problemId:", problemId);
     try {
@@ -45,6 +49,7 @@ export function useChat(settings: Settings, problem: Problem | null, onApiKeyErr
     }
   }, []);
 
+  // 상태 관리 함수
   const saveChat = useCallback(async (problemId: string, msgs: ChatMessage[]) => {
     console.log("[useChat] saveChat called:", problemId, msgs);
     try {
@@ -58,6 +63,7 @@ export function useChat(settings: Settings, problem: Problem | null, onApiKeyErr
     }
   }, []);
 
+  // 상태 관리 함수
   useEffect(() => {
     console.log("[useChat] problem changed:", problem?.id, "current ref:", currentProblemIdRef.current);
     if (problem?.id !== currentProblemIdRef.current) {
@@ -72,6 +78,7 @@ export function useChat(settings: Settings, problem: Problem | null, onApiKeyErr
     }
   }, [problem?.id, loadChat]);
 
+  // 상태 관리 함수
   const buildContext = useCallback(
     (userCode?: string) => {
       if (!problem) return "";
@@ -99,6 +106,7 @@ ${problem.samples.map((s, i) => `예제 ${i + 1}:\n입력:\n${s.input}\n출력:\
     [problem]
   );
 
+  // 상태 관리 함수
   useEffect(() => {
     if (!sessionIdRef.current) return;
 
