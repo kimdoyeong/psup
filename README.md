@@ -52,6 +52,21 @@ npm run tauri dev
 npm run tauri build
 ```
 
+### GitHub Actions를 통한 자동 빌드
+
+태그를 푸시하면 자동으로 Windows와 macOS(Intel/Apple Silicon)용 바이너리가 빌드되고 GitHub Release에 업로드됩니다.
+
+```bash
+# 버전 업데이트
+npm version minor
+
+# 태그 푸시 (자동 빌드 트리거)
+git push origin main
+git push origin --tags
+```
+
+자세한 내용은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.
+
 ## Settings (설정)
 
 ### API 키 입력
