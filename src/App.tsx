@@ -26,7 +26,7 @@ function App() {
   const [isSolvedToday, setIsSolvedToday] = useState(false);
 
   // 설정 관리 (API 키, 모델, 프롬프트)
-  const { settings, models, loadingModels, saveSettings, clearSettings, fetchModels, DEFAULT_PROMPT } = useSettings();
+  const { settings, models, loadingModels, modelLoadError, saveSettings, clearSettings, fetchModels, DEFAULT_PROMPT } = useSettings();
   // 문제 정보 관리 (번호로 검색한 문제)
   const { problem, loading: problemLoading, error, fetchProblem } = useProblem();
   // 문제 히스토리 관리 (과거에 풀었던 문제들)
@@ -210,6 +210,7 @@ function App() {
           settings={settings}
           models={models}
           loadingModels={loadingModels}
+          modelLoadError={modelLoadError}
           defaultPrompt={DEFAULT_PROMPT}
           onFetchModels={fetchModels}
           onSave={saveSettings}

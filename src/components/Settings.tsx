@@ -5,6 +5,7 @@ interface SettingsProps {
   settings: Settings;
   models: AvailableModel[];
   loadingModels: boolean;
+  modelLoadError: boolean;
   defaultPrompt: string;
   onFetchModels: (apiKey: string) => void;
   onSave: (settings: Settings) => void;
@@ -16,6 +17,7 @@ export function Settings({
   settings,
   models,
   loadingModels,
+  modelLoadError,
   defaultPrompt,
   onFetchModels,
   onSave,
@@ -70,23 +72,28 @@ export function Settings({
           </p>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm text-gray-400 mb-2">
-            모델 선택 {loadingModels && <span className="text-blue-400 text-xs">(업데이트 중...)</span>}
-          </label>
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            disabled={loadingModels}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-          >
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.id})
-              </option>
-            ))}
-          </select>
-        </div>
+         <div className="mb-4">
+           <label className="block text-sm text-gray-400 mb-2">
+             모델 선택 {loadingModels && <span className="text-blue-400 text-xs">(업데이트 중...)</span>}
+             {modelLoadError && <span className="text-red-400 text-xs">(API 키 오류)</span>}
+           </label>
+           <select
+             value={model}
+             onChange={(e) => setModel(e.target.value)}
+             disabled={loadingModels || !apiKey || models.length === 0 || modelLoadError}
+             className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+             {models.length === 0 ? (
+               <option>{modelLoadError ? "API 키가 유효하지 않습니다" : "API 키를 입력해주세요"}</option>
+             ) : (
+               models.map((m) => (
+                 <option key={m.id} value={m.id}>
+                   {m.name} ({m.id})
+                 </option>
+               ))
+             )}
+           </select>
+         </div>
 
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">

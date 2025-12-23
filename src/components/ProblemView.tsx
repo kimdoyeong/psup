@@ -103,13 +103,17 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
 
 // HTML 내용을 렌더링하는 섹션
 function HtmlSection({ title, html }: { title: string; html: string }) {
+  const fixedHtml = html
+    .replace(/src="\/upload\//g, 'src="https://www.acmicpc.net/upload/')
+    .replace(/src="\/problem\/\d+\/img\//g, (match) => `src="https://www.acmicpc.net${match.replace(/img\/$/, '')}"`);
+  
   return (
     <div>
       <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
       {/* HTML을 그대로 렌더링 (XSS 공격 방지는 백엔드에서 담당) */}
       <div 
         className="text-gray-300 prose prose-invert prose-sm max-w-none"
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: fixedHtml }}
       />
     </div>
   );

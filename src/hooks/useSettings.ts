@@ -49,6 +49,7 @@ export function useSettings() {
   });
   const [models, setModels] = useState<AvailableModel[]>(FALLBACK_MODELS);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [modelLoadError, setModelLoadError] = useState(false);
 
   // 상태 관리 함수
   useEffect(() => {
@@ -62,10 +63,12 @@ export function useSettings() {
   const fetchModels = async (apiKey: string) => {
     if (!apiKey) {
       setModels(FALLBACK_MODELS);
+      setModelLoadError(false);
       return;
     }
 
     setLoadingModels(true);
+    setModelLoadError(false);
     try {
       const response = await invoke<Array<{ name: string; display_name: string }>>(
         "get_available_models",
@@ -76,9 +79,11 @@ export function useSettings() {
         name: m.display_name,
       }));
       setModels(mappedModels);
+      setModelLoadError(false);
     } catch (error) {
       console.error("Failed to fetch models:", error);
-      setModels(FALLBACK_MODELS);
+      setModels([]);
+      setModelLoadError(true);
     } finally {
       setLoadingModels(false);
     }
@@ -97,5 +102,5 @@ export function useSettings() {
     Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
   };
 
-  return { settings, models, loadingModels, saveSettings, clearSettings, fetchModels, DEFAULT_PROMPT };
+  return { settings, models, loadingModels, modelLoadError, saveSettings, clearSettings, fetchModels, DEFAULT_PROMPT };
 }
