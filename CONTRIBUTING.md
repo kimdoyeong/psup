@@ -27,9 +27,6 @@
 # Windows
 npm run tauri build -- --target x86_64-pc-windows-msvc
 
-# macOS (Intel)
-npm run tauri build -- --target x86_64-apple-darwin
-
 # macOS (Apple Silicon)
 npm run tauri build -- --target aarch64-apple-darwin
 ```
