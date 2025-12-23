@@ -1,6 +1,7 @@
 # PSUP - AI PS 도우미
 
 백준 문제를 가져와 AI(Google Gemini)와 함께 문제 해결을 도와주는 데스크톱 앱
+이 앱은 99.9% **AI 해줘** 코딩으로 제작되었습니다. (thanks to opencode)
 
 ## 기술 스택
 
