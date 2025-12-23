@@ -52,6 +52,19 @@ npm run tauri dev
 npm run tauri build
 ```
 
+## macOS에서 앱 실행
+
+GitHub Release에서 다운로드한 `.dmg` 파일에서 앱을 실행할 때 "손상되었기 때문에 열 수 없습니다" 오류가 뜨면:
+
+```bash
+# 터미널에서 다음 명령어 실행
+xattr -d com.apple.quarantine /Applications/psup.app
+```
+
+또는:
+1. psup.app 우클릭 → "열기" 선택
+2. 보안 경고에서 "열기" 버튼 클릭
+
 ### GitHub Actions를 통한 자동 빌드
 
 태그를 푸시하면 자동으로 Windows와 macOS(Intel/Apple Silicon)용 바이너리가 빌드되고 GitHub Release에 업로드됩니다.
