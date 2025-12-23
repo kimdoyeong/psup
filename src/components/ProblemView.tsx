@@ -13,6 +13,7 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
+        {/* 로딩 중 표시 */}
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
       </div>
     );
@@ -21,6 +22,7 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-red-400">
+        {/* 오류 메시지 표시 */}
         {error}
       </div>
     );
@@ -29,6 +31,7 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
   if (!problem) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
+        {/* 문제가 아직 로드되지 않음 */}
         문제 번호를 입력하고 불러오기를 눌러주세요
       </div>
     );
@@ -36,6 +39,7 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6">
+      {/* 제목과 풀었어요 버튼 */}
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold text-white mb-2">
@@ -74,10 +78,14 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
         )}
       </div>
 
-      <Section title="문제">{problem.description}</Section>
-      <Section title="입력">{problem.input_description}</Section>
-      <Section title="출력">{problem.output_description}</Section>
+      {/* 문제 설명 (HTML로 렌더링) */}
+      <HtmlSection title="문제" html={problem.description} />
+      {/* 입력 설명 (HTML로 렌더링) */}
+      <HtmlSection title="입력" html={problem.input_description} />
+      {/* 출력 설명 (HTML로 렌더링) */}
+      <HtmlSection title="출력" html={problem.output_description} />
 
+      {/* 예제 */}
       <div>
         <h3 className="text-lg font-semibold text-white mb-3">예제</h3>
         <div className="space-y-4">
@@ -93,11 +101,16 @@ export function ProblemView({ problem, loading, error, isSolvedToday, onMarkSolv
   );
 }
 
-function Section({ title, children }: { title: string; children: string }) {
+// HTML 내용을 렌더링하는 섹션
+function HtmlSection({ title, html }: { title: string; html: string }) {
   return (
     <div>
       <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-gray-300 whitespace-pre-wrap">{children}</p>
+      {/* HTML을 그대로 렌더링 (XSS 공격 방지는 백엔드에서 담당) */}
+      <div 
+        className="text-gray-300 prose prose-invert prose-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
     </div>
   );
 }
