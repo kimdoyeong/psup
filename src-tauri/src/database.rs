@@ -232,12 +232,49 @@ impl Database {
     pub fn record_solve(&self, problem_id: &str) -> SqliteResult<i64> {
         let conn = self.conn.lock().unwrap();
         
+        let today_exists: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM solve_records WHERE problem_id = ?1 AND date(solved_at) = date('now'))",
+                [problem_id],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
+        
+        if today_exists {
+            return Ok(0);
+        }
+        
         conn.execute(
             "INSERT INTO solve_records (problem_id) VALUES (?1)",
             [problem_id],
         )?;
         
         Ok(conn.last_insert_rowid())
+    }
+
+    pub fn unrecord_solve(&self, problem_id: &str) -> SqliteResult<bool> {
+        let conn = self.conn.lock().unwrap();
+        
+        let deleted = conn.execute(
+            "DELETE FROM solve_records WHERE problem_id = ?1 AND date(solved_at) = date('now')",
+            [problem_id],
+        )?;
+        
+        Ok(deleted > 0)
+    }
+
+    pub fn is_solved_today(&self, problem_id: &str) -> SqliteResult<bool> {
+        let conn = self.conn.lock().unwrap();
+        
+        let exists: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM solve_records WHERE problem_id = ?1 AND date(solved_at) = date('now'))",
+                [problem_id],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
+        
+        Ok(exists)
     }
 
     pub fn get_activity_data(&self, days: i32) -> SqliteResult<Vec<ActivityData>> {

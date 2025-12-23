@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "../types";
 
 interface ChatPanelProps {
@@ -73,8 +74,10 @@ export function ChatPanel({
                 <div className="text-xs text-gray-500 mb-1">
                   {msg.role === "user" ? "나" : "AI"}
                 </div>
-                <div className="text-gray-200 whitespace-pre-wrap">
-                  {displayContent}
+                <div className="text-gray-200">
+                  <div className="prose prose-invert prose-sm max-w-none prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700 prose-code:text-blue-300 prose-code:before:content-none prose-code:after:content-none">
+                    <ReactMarkdown>{displayContent}</ReactMarkdown>
+                  </div>
                   {isLastAssistant && loading && (
                     <span className="inline-block w-2 h-4 bg-blue-400 animate-pulse ml-1" />
                   )}

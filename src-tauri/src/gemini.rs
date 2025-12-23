@@ -2,8 +2,25 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use futures::StreamExt;
 
-const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-const GEMINI_STREAM_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent";
+const GEMINI_API_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/models";
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GeminiModel {
+    pub name: String,
+    pub display_name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ListModelsResponse {
+    models: Vec<Model>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Model {
+    name: String,
+    #[serde(rename = "displayName")]
+    display_name: String,
+}
 
 #[derive(Debug, Serialize)]
 struct GeminiRequest {
@@ -66,6 +83,37 @@ pub struct StreamChunk {
     pub done: bool,
 }
 
+pub async fn fetch_available_models(api_key: &str) -> Result<Vec<GeminiModel>, String> {
+    let client = reqwest::Client::new();
+    let url = format!("{}?key={}", GEMINI_API_BASE, api_key);
+    
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch models: {}", e))?;
+    
+    if !response.status().is_success() {
+        return Err(format!("API error: {}", response.status()));
+    }
+    
+    let list_response: ListModelsResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse models: {}", e))?;
+    
+    let models = list_response
+        .models
+        .into_iter()
+        .map(|m| GeminiModel {
+            name: m.name.replace("models/", ""),
+            display_name: m.display_name,
+        })
+        .collect();
+    
+    Ok(models)
+}
+
 fn build_contents(messages: Vec<ChatMessage>, system_prompt: &str) -> Vec<Content> {
     let mut contents: Vec<Content> = vec![];
     
@@ -95,7 +143,9 @@ fn build_contents(messages: Vec<ChatMessage>, system_prompt: &str) -> Vec<Conten
 }
 
 pub async fn chat(
+
     api_key: &str,
+    model: &str,
     messages: Vec<ChatMessage>,
     system_prompt: &str,
 ) -> Result<String, String> {
@@ -110,7 +160,7 @@ pub async fn chat(
         },
     };
     
-    let url = format!("{}?key={}", GEMINI_API_URL, api_key);
+    let url = format!("{}/{}:generateContent?key={}", GEMINI_API_BASE, model, api_key);
     
     let response = client
         .post(&url)
@@ -139,6 +189,7 @@ pub async fn chat(
 pub async fn chat_stream(
     app: AppHandle,
     api_key: &str,
+    model: &str,
     messages: Vec<ChatMessage>,
     system_prompt: &str,
     session_id: String,
@@ -154,7 +205,7 @@ pub async fn chat_stream(
         },
     };
     
-    let url = format!("{}?key={}&alt=sse", GEMINI_STREAM_URL, api_key);
+    let url = format!("{}/{}:streamGenerateContent?key={}&alt=sse", GEMINI_API_BASE, model, api_key);
     
     let response = client
         .post(&url)

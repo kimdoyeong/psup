@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { ProblemInput } from "./components/ProblemInput";
 import { ProblemView } from "./components/ProblemView";
 import { ChatPanel } from "./components/ChatPanel";
@@ -7,15 +8,16 @@ import { Settings } from "./components/Settings";
 import { HistorySidebar } from "./components/HistorySidebar";
 import { useProblem } from "./hooks/useProblem";
 import { useChat } from "./hooks/useChat";
-import { useApiKey } from "./hooks/useApiKey";
+import { useSettings } from "./hooks/useSettings";
 import { useHistory } from "./hooks/useHistory";
 import "./App.css";
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [userCode, setUserCode] = useState("");
+  const [isSolvedToday, setIsSolvedToday] = useState(false);
 
-  const { apiKey, saveApiKey, clearApiKey } = useApiKey();
+  const { settings, models, loadingModels, saveSettings, clearSettings, fetchModels, DEFAULT_PROMPT } = useSettings();
   const { problem, loading: problemLoading, error, fetchProblem } = useProblem();
   const { problems, activityData, loading: historyLoading, refreshHistory, deleteProblem } = useHistory();
   const {
@@ -24,7 +26,23 @@ function App() {
     sendMessage,
     clearMessages,
     streamingContent,
-  } = useChat(apiKey, problem);
+  } = useChat(settings, problem);
+
+  useEffect(() => {
+    const checkSolved = async () => {
+      if (problem?.id) {
+        try {
+          const solved = await invoke<boolean>("is_solved_today", { problemId: problem.id });
+          setIsSolvedToday(solved);
+        } catch {
+          setIsSolvedToday(false);
+        }
+      } else {
+        setIsSolvedToday(false);
+      }
+    };
+    checkSolved();
+  }, [problem?.id]);
 
   const handleSendMessage = (content: string) => {
     sendMessage(content, userCode || undefined);
@@ -35,6 +53,28 @@ function App() {
     refreshHistory();
   };
 
+  const handleMarkSolved = async () => {
+    if (!problem) return;
+    try {
+      await invoke("record_solve", { problemId: problem.id });
+      setIsSolvedToday(true);
+      refreshHistory();
+    } catch (e) {
+      console.error("Failed to record solve:", e);
+    }
+  };
+
+  const handleUnmarkSolved = async () => {
+    if (!problem) return;
+    try {
+      await invoke("unrecord_solve", { problemId: problem.id });
+      setIsSolvedToday(false);
+      refreshHistory();
+    } catch (e) {
+      console.error("Failed to unrecord solve:", e);
+    }
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-white flex flex-col">
       <header className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900 z-10">
@@ -42,9 +82,9 @@ function App() {
         <button
           onClick={() => setShowSettings(true)}
           className={`p-2 rounded-lg transition-colors ${
-            apiKey ? "text-green-400 hover:bg-gray-800" : "text-yellow-400 hover:bg-gray-800"
+            settings.apiKey ? "text-green-400 hover:bg-gray-800" : "text-yellow-400 hover:bg-gray-800"
           }`}
-          title={apiKey ? "API 키 설정됨" : "API 키 필요"}
+          title={settings.apiKey ? "API 키 설정됨" : "API 키 필요"}
         >
           <SettingsIcon />
         </button>
@@ -66,7 +106,14 @@ function App() {
 
           <div className="flex-1 flex overflow-hidden">
             <div className="w-1/2 border-r border-gray-800 overflow-hidden">
-              <ProblemView problem={problem} loading={problemLoading} error={error} />
+              <ProblemView 
+                problem={problem} 
+                loading={problemLoading} 
+                error={error} 
+                isSolvedToday={isSolvedToday}
+                onMarkSolved={handleMarkSolved}
+                onUnmarkSolved={handleUnmarkSolved}
+              />
             </div>
 
             <div className="w-1/2 flex flex-col p-4 overflow-hidden">
@@ -90,9 +137,13 @@ function App() {
 
       {showSettings && (
         <Settings
-          apiKey={apiKey}
-          onSave={saveApiKey}
-          onClear={clearApiKey}
+          settings={settings}
+          models={models}
+          loadingModels={loadingModels}
+          defaultPrompt={DEFAULT_PROMPT}
+          onFetchModels={fetchModels}
+          onSave={saveSettings}
+          onClear={clearSettings}
           onClose={() => setShowSettings(false)}
         />
       )}

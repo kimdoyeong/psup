@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { ChatMessage, Problem } from "../types";
+import type { Settings } from "./useSettings";
 
 interface StreamChunk {
   text: string;
@@ -16,16 +17,7 @@ interface ChatRecord {
   updated_at: string;
 }
 
-const SYSTEM_PROMPT = `당신은 알고리즘 문제 해결을 돕는 튜터입니다.
-
-역할:
-- 힌트 제공: 직접적인 답 대신 학생이 스스로 풀 수 있도록 유도
-- 코드 리뷰: 제출된 코드 분석, 시간/공간 복잡도, 개선점 제안
-- 테스트케이스: 엣지 케이스, 코너 케이스, 반례 생성
-
-학생의 질문에 따라 적절한 도움을 제공하세요.`;
-
-export function useChat(apiKey: string, problem: Problem | null) {
+export function useChat(settings: Settings, problem: Problem | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -143,7 +135,7 @@ ${problem.samples.map((s, i) => `예제 ${i + 1}:\n입력:\n${s.input}\n출력:\
   }, [sessionIdRef.current, streamingContent, problem?.id, saveChat]);
 
   const sendMessage = async (content: string, userCode?: string) => {
-    if (!apiKey || !problem) return;
+    if (!settings.apiKey || !problem) return;
 
     const userMessage: ChatMessage = { role: "user", content };
     const newMessages = [...messages, userMessage];
@@ -166,9 +158,10 @@ ${problem.samples.map((s, i) => `예제 ${i + 1}:\n입력:\n${s.input}\n출력:\
       });
 
       const fullResponse = await invoke<string>("chat_with_ai_stream", {
-        apiKey,
+        apiKey: settings.apiKey,
+        model: settings.model,
         messages: contextedMessages,
-        systemPrompt: SYSTEM_PROMPT,
+        systemPrompt: settings.customPrompt,
         sessionId,
       });
 

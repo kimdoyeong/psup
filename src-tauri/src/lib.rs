@@ -4,7 +4,7 @@ mod gemini;
 
 use crawler::Problem;
 use database::{ActivityData, ChatRecord, Database, ProblemRecord};
-use gemini::ChatMessage;
+use gemini::{ChatMessage, GeminiModel};
 use tauri::{AppHandle, Manager, State};
 
 #[tauri::command]
@@ -20,21 +20,23 @@ async fn fetch_problem(
 #[tauri::command]
 async fn chat_with_ai(
     api_key: String,
+    model: String,
     messages: Vec<ChatMessage>,
     system_prompt: String,
 ) -> Result<String, String> {
-    gemini::chat(&api_key, messages, &system_prompt).await
+    gemini::chat(&api_key, &model, messages, &system_prompt).await
 }
 
 #[tauri::command]
 async fn chat_with_ai_stream(
     app: AppHandle,
     api_key: String,
+    model: String,
     messages: Vec<ChatMessage>,
     system_prompt: String,
     session_id: String,
 ) -> Result<String, String> {
-    gemini::chat_stream(app, &api_key, messages, &system_prompt, session_id).await
+    gemini::chat_stream(app, &api_key, &model, messages, &system_prompt, session_id).await
 }
 
 #[tauri::command]
@@ -80,11 +82,26 @@ async fn record_solve(db: State<'_, Database>, problem_id: String) -> Result<i64
 }
 
 #[tauri::command]
+async fn unrecord_solve(db: State<'_, Database>, problem_id: String) -> Result<bool, String> {
+    db.unrecord_solve(&problem_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn is_solved_today(db: State<'_, Database>, problem_id: String) -> Result<bool, String> {
+    db.is_solved_today(&problem_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn get_activity_data(
     db: State<'_, Database>,
     days: i32,
 ) -> Result<Vec<ActivityData>, String> {
     db.get_activity_data(days).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_available_models(api_key: String) -> Result<Vec<GeminiModel>, String> {
+    gemini::fetch_available_models(&api_key).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -111,7 +128,10 @@ pub fn run() {
             get_chat_by_problem,
             delete_problem,
             record_solve,
-            get_activity_data
+            unrecord_solve,
+            is_solved_today,
+            get_activity_data,
+            get_available_models
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

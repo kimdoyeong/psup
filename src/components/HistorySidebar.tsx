@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ProblemRecord, ActivityData } from "../types";
 import { ContributionGraph } from "./ContributionGraph";
+
+const BREAKPOINT = 1024;
 
 interface HistorySidebarProps {
   problems: ProblemRecord[];
@@ -17,7 +19,18 @@ export function HistorySidebar({
   onDeleteProblem,
   loading = false,
 }: HistorySidebarProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(() => window.innerWidth >= BREAKPOINT);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < BREAKPOINT) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleDelete = (e: React.MouseEvent, problemId: string) => {
     e.stopPropagation();
