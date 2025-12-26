@@ -44,8 +44,11 @@ function App() {
     setShowSettings(true);
   });
 
-  // 문제가 바뀔 때마다 실행 - 오늘 풀었는지 확인
+  // 문제가 바뀔 때마다 실행 - 오늘 풀었는지 확인 + 코드 초기화
   useEffect(() => {
+    // 문제가 바뀌면 코드 에디터 초기화
+    setUserCode("");
+    
     const checkSolved = async () => {
       if (problem?.id) {
         try {

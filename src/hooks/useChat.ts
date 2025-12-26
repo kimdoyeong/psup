@@ -145,7 +145,10 @@ ${problem.samples.map((s, i) => `예제 ${i + 1}:\n입력:\n${s.input}\n출력:\
    const sendMessage = async (content: string, userCode?: string) => {
      if (!settings.apiKey || !problem) return;
  
-     const userMessage: ChatMessage = { role: "user", content };
+     const displayContent = userCode
+       ? `${content}\n\n\`\`\`\n${userCode}\n\`\`\``
+       : content;
+     const userMessage: ChatMessage = { role: "user", content: displayContent };
      const newMessages = [...messages, userMessage];
      setMessages([...newMessages, { role: "assistant", content: "" }]);
      setLoading(true);
@@ -155,15 +158,15 @@ ${problem.samples.map((s, i) => `예제 ${i + 1}:\n입력:\n${s.input}\n출력:\
      sessionIdRef.current = sessionId;
  
      try {
-       const contextedMessages = newMessages.map((m, i) => {
-         if (i === 0) {
-           return {
-             ...m,
-             content: `${buildContext(userCode)}\n\n${m.content}`,
-           };
-         }
-         return m;
-       });
+        const contextedMessages = newMessages.map((m, i) => {
+          if (i === 0) {
+            return {
+              ...m,
+              content: `${buildContext()}\\n\\n${m.content}`,
+            };
+          }
+          return m;
+        });
  
        const fullResponse = await invoke<string>("chat_with_ai_stream", {
          apiKey: settings.apiKey,
